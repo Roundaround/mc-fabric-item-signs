@@ -5,15 +5,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 public interface SignBlockEntityExtensions {
-  default boolean itemsigns$placeItem(World world, PlayerEntity player, ItemStack stack) {
+  default boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
     return false;
   }
 
-  default boolean itemsigns$hasItem(PlayerEntity player) {
+  default boolean itemsigns$hasItemFacingPlayer(PlayerEntity player) {
     return false;
   }
 
-  default void itemsigns$dropItem(World world, PlayerEntity player) {
+  default void itemsigns$dropItemFacingPlayer(World world, PlayerEntity player) {
   }
 
   default ItemStack itemsigns$getFrontStack() {

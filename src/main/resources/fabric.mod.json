@@ -16,7 +16,8 @@
   "custom": {
     "loom:injected_interfaces": {
       "net/minecraft/class_2625": [
-        "me/roundaround/itemsigns/block/entity/SignBlockEntityExtensions"
+        "me/roundaround/itemsigns/block/entity/SignBlockEntityExtensions",
+        "me/roundaround/itemsigns/util/ClearableExtended"
       ]
     }
   }
