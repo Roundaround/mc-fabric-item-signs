@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "${modId}",
+  "version": "${version}",
+  "name": "Item Signs",
+  "description": "Place items into signs the same way you can with item frames!",
+  "authors": [
+    "Roundaround"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/item-signs",
+    "sources": "https://github.com/Roundaround/mc-fabric-item-signs",
+    "issues": "https://github.com/Roundaround/mc-fabric-item-signs/issues"
+  },
+  "license": "MIT",
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_2625": [
+        "me/roundaround/itemsigns/block/entity/SignBlockEntityExtensions"
+      ]
+    }
+  }
+}
