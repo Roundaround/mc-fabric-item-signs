@@ -47,36 +47,6 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     SignItemStorage.getInstance(this).ifPresent((manager) -> manager.read(this.getPos(), this.itemsigns$items));
   }
 
-  @Unique
-  private int itemsigns$getIndexForSide(boolean front) {
-    return front ? 0 : 1;
-  }
-
-  @Unique
-  private void itemsigns$updateListeners() {
-    this.markDirty();
-
-    BlockPos blockPos = this.getPos();
-    Objects.requireNonNull(this.getWorld())
-        .updateListeners(blockPos, this.getCachedState(), this.getCachedState(), Block.NOTIFY_ALL);
-    SignItemStorage.getInstance(this).ifPresent((manager) -> manager.write(blockPos, this.itemsigns$items));
-  }
-
-  @Unique
-  private void itemsigns$setItemOnPlayerSide(World world, PlayerEntity player, ItemStack stack, int index) {
-    this.itemsigns$items.set(index, stack);
-    world.emitGameEvent(GameEvent.BLOCK_CHANGE, this.getPos(), GameEvent.Emitter.of(player, this.getCachedState()));
-    this.itemsigns$updateListeners();
-    world.playSound(
-        null,
-        this.getPos(),
-        stack.isEmpty() ? SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM : SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM,
-        SoundCategory.NEUTRAL,
-        1f,
-        1f
-    );
-  }
-
   @Override
   public boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
     int index = this.itemsigns$getIndexForSide(this.isPlayerFacingFront(player));
@@ -141,5 +111,35 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Override
   public void removeFromCopiedStackNbt(NbtCompound nbt) {
     nbt.remove("Items");
+  }
+
+  @Unique
+  private int itemsigns$getIndexForSide(boolean front) {
+    return front ? 0 : 1;
+  }
+
+  @Unique
+  private void itemsigns$updateListeners() {
+    this.markDirty();
+
+    BlockPos blockPos = this.getPos();
+    Objects.requireNonNull(this.getWorld())
+        .updateListeners(blockPos, this.getCachedState(), this.getCachedState(), Block.NOTIFY_ALL);
+    SignItemStorage.getInstance(this).ifPresent((manager) -> manager.write(blockPos, this.itemsigns$items));
+  }
+
+  @Unique
+  private void itemsigns$setItemOnPlayerSide(World world, PlayerEntity player, ItemStack stack, int index) {
+    this.itemsigns$items.set(index, stack);
+    world.emitGameEvent(GameEvent.BLOCK_CHANGE, this.getPos(), GameEvent.Emitter.of(player, this.getCachedState()));
+    this.itemsigns$updateListeners();
+    world.playSound(
+        null,
+        this.getPos(),
+        stack.isEmpty() ? SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM : SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM,
+        SoundCategory.NEUTRAL,
+        1f,
+        1f
+    );
   }
 }
