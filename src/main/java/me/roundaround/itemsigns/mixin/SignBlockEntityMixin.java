@@ -1,6 +1,7 @@
 package me.roundaround.itemsigns.mixin;
 
 import me.roundaround.itemsigns.block.entity.SignBlockEntityExtensions;
+import me.roundaround.itemsigns.server.SignItemStorage;
 import me.roundaround.itemsigns.util.ClearableExtended;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -11,7 +12,6 @@ import net.minecraft.component.ComponentMap;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
@@ -42,15 +42,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Shadow
   public abstract boolean isPlayerFacingFront(PlayerEntity player);
 
-  @Inject(method = "writeNbt", at = @At("TAIL"))
-  private void writeAdditionalNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-    Inventories.writeNbt(nbt, this.itemsigns$items, true, registries);
-  }
-
-  @Inject(method = "readNbt", at = @At("TAIL"))
+  @Inject(method = "readNbt", at = @At("RETURN"))
   private void readAdditionalNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-    this.itemsigns$items.clear();
-    Inventories.readNbt(nbt, this.itemsigns$items, registries);
+    SignItemStorage.getInstance(this).ifPresent((manager) -> manager.read(this.getPos(), this.itemsigns$items));
   }
 
   @Unique
@@ -61,8 +55,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Unique
   private void itemsigns$updateListeners() {
     this.markDirty();
+
+    BlockPos blockPos = this.getPos();
     Objects.requireNonNull(this.getWorld())
-        .updateListeners(this.getPos(), this.getCachedState(), this.getCachedState(), Block.NOTIFY_ALL);
+        .updateListeners(blockPos, this.getCachedState(), this.getCachedState(), Block.NOTIFY_ALL);
+    SignItemStorage.getInstance(this).ifPresent((manager) -> manager.write(blockPos, this.itemsigns$items));
   }
 
   @Unique
@@ -125,6 +122,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Override
   public void clear() {
     this.itemsigns$items.clear();
+    SignItemStorage.getInstance(this).ifPresent((manager) -> manager.clear(this.getPos()));
   }
 
   @Override
@@ -137,5 +135,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   protected void addComponents(ComponentMap.Builder builder) {
     super.addComponents(builder);
     builder.add(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.itemsigns$items));
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public void removeFromCopiedStackNbt(NbtCompound nbt) {
+    nbt.remove("Items");
   }
 }
