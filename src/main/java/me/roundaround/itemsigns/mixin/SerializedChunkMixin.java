@@ -6,6 +6,7 @@ import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.chunk.SerializedChunk;
 import net.minecraft.world.chunk.WorldChunk;
@@ -31,7 +32,8 @@ public abstract class SerializedChunkMixin {
       CallbackInfo ci,
       @Local NbtCompound nbt
   ) {
-    if (!nbt.contains("x") || !nbt.contains("y") || !nbt.contains("z")) {
+    if (!nbt.contains("x", NbtElement.NUMBER_TYPE) || !nbt.contains("y", NbtElement.NUMBER_TYPE) ||
+        !nbt.contains("z", NbtElement.NUMBER_TYPE)) {
       return;
     }
 

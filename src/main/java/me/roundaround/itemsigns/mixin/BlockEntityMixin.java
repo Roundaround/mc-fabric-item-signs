@@ -30,7 +30,7 @@ public abstract class BlockEntityMixin implements AttachmentTargetImpl {
     String key = ItemSignsAttachmentTypes.SIGN_ITEMS.identifier().toString();
     World world = this.getWorld();
 
-    if (!nbt.contains(key) || world == null || world instanceof ClientWorld) {
+    if (!nbt.contains(key) || world == null || world.isClient()) {
       return;
     }
 
