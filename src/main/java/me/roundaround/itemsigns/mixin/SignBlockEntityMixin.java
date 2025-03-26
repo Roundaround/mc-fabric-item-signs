@@ -4,7 +4,6 @@ import me.roundaround.itemsigns.attachment.ItemSignsAttachmentTypes;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.block.entity.SignBlockEntityExtensions;
 import me.roundaround.itemsigns.server.SignItemStorage;
-import me.roundaround.itemsigns.util.ClearableExtended;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -19,6 +18,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.function.Function;
 
 @Mixin(SignBlockEntity.class)
-public abstract class SignBlockEntityMixin extends BlockEntity implements SignBlockEntityExtensions, ClearableExtended {
+public abstract class SignBlockEntityMixin extends BlockEntity implements SignBlockEntityExtensions {
   protected SignBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {
     super(type, pos, state);
   }
@@ -73,6 +73,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Override
   public ItemStack itemsigns$getBackStack() {
     return this.itemsigns$getItem(false);
+  }
+
+  @Override
+  public DefaultedList<ItemStack> itemsigns$getItems() {
+    return this.itemsigns$getAttachment().getAll();
   }
 
   @Override

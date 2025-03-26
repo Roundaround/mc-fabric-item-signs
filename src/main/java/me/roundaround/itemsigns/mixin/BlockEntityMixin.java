@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings("UnstableApiUsage")
 @Mixin(BlockEntity.class)
 public abstract class BlockEntityMixin implements AttachmentTargetImpl {
   @Shadow
@@ -34,10 +35,9 @@ public abstract class BlockEntityMixin implements AttachmentTargetImpl {
       return;
     }
 
-    this.getAttachedOrCreate(
-        ItemSignsAttachmentTypes.SIGN_ITEMS,
-        () -> SignItemsAttachment.decode(nbt.get(key), registries)
-    );
+    if (!this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS)) {
+      this.setAttached(ItemSignsAttachmentTypes.SIGN_ITEMS, SignItemsAttachment.decode(nbt.get(key), registries));
+    }
   }
 
   @Unique

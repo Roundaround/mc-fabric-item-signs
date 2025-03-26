@@ -1,7 +1,7 @@
 package me.roundaround.itemsigns;
 
 import me.roundaround.itemsigns.attachment.ItemSignsAttachmentTypes;
-import me.roundaround.roundalib.gradle.api.annotation.Entrypoint;
+import me.roundaround.gradle.api.annotation.Entrypoint;
 import net.fabricmc.api.ModInitializer;
 
 @Entrypoint(Entrypoint.MAIN)

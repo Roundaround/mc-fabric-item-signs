@@ -2,9 +2,11 @@ package me.roundaround.itemsigns.block.entity;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Clearable;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
-public interface SignBlockEntityExtensions {
+public interface SignBlockEntityExtensions extends Clearable {
   default boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
     return false;
   }
@@ -23,4 +25,11 @@ public interface SignBlockEntityExtensions {
   default ItemStack itemsigns$getBackStack() {
     return ItemStack.EMPTY;
   }
+
+  default DefaultedList<ItemStack> itemsigns$getItems() {
+    return null;
+  }
+
+  @Override
+  default void clear() {}
 }
