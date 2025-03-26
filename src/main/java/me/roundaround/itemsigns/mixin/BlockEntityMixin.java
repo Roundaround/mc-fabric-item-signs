@@ -5,7 +5,6 @@ import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.World;
