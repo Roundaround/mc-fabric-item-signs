@@ -19,5 +19,8 @@
         "me/roundaround/itemsigns/block/entity/SignBlockEntityExtensions"
       ]
     }
+  },
+  "depends": {
+    "fabric-data-attachment-api-v1": ">=0.115.0"
   }
 }
