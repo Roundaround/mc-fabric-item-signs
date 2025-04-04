@@ -1,5 +1,6 @@
 package me.roundaround.itemsigns.mixin;
 
+import me.roundaround.itemsigns.ItemSignsMod;
 import me.roundaround.itemsigns.attachment.ItemSignsAttachmentTypes;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
@@ -35,7 +36,11 @@ public abstract class BlockEntityMixin implements AttachmentTargetImpl {
     }
 
     if (!this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS)) {
-      this.setAttached(ItemSignsAttachmentTypes.SIGN_ITEMS, SignItemsAttachment.decode(nbt.get(key), registries));
+      try {
+        this.setAttached(ItemSignsAttachmentTypes.SIGN_ITEMS, SignItemsAttachment.decode(nbt.get(key), registries));
+      } catch (Exception e) {
+        ItemSignsMod.LOGGER.warn("Exception thrown trying to \"recover\" sign item data:", e);
+      }
     }
   }
 
