@@ -2,6 +2,7 @@ package me.roundaround.itemsigns.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.block.AbstractSignBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -11,6 +12,7 @@ import net.minecraft.block.entity.SignText;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SignChangingItem;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
@@ -101,6 +103,7 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
       BlockEntity blockEntity = world.getBlockEntity(pos);
       if (blockEntity instanceof SignBlockEntity signBlockEntity) {
         ItemScatterer.spawn(world, pos, signBlockEntity.itemsigns$getItems());
+        SignItemStorage.getInstance((ServerWorld) world).remove(pos);
       }
 
       super.onStateReplaced(state, world, pos, newState, moved);
