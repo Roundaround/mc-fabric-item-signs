@@ -151,9 +151,6 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
         1f,
         1f
     );
-
-    //    world.emitGameEvent(GameEvent.BLOCK_CHANGE, blockPos, GameEvent.Emitter.of(player, this.getCachedState()));
-    //    world.updateListeners(blockPos, this.getCachedState(), this.getCachedState(), Block.NOTIFY_ALL);
   }
 
   @SuppressWarnings("UnstableApiUsage")
