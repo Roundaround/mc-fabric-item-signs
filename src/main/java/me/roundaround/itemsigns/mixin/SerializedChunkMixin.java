@@ -6,7 +6,6 @@ import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.chunk.SerializedChunk;
 import net.minecraft.world.chunk.WorldChunk;
@@ -22,7 +21,7 @@ public abstract class SerializedChunkMixin {
   @SuppressWarnings("UnstableApiUsage")
   @Inject(
       method = "method_61797",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getBoolean(Ljava/lang/String;)Z")
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getBoolean(Ljava/lang/String;Z)Z")
   )
   private static void beforeProcessingBlockEntity(
       List<NbtCompound> entities,
@@ -32,12 +31,12 @@ public abstract class SerializedChunkMixin {
       CallbackInfo ci,
       @Local NbtCompound nbt
   ) {
-    if (!nbt.contains("x", NbtElement.NUMBER_TYPE) || !nbt.contains("y", NbtElement.NUMBER_TYPE) ||
-        !nbt.contains("z", NbtElement.NUMBER_TYPE)) {
+    if (!nbt.contains("x") || !nbt.contains("y") || !nbt.contains("z")) {
       return;
     }
 
-    SignItemsAttachment attachment = SignItemStorage.getInstance(world).get(BlockEntity.posFromNbt(nbt));
+    SignItemsAttachment attachment = SignItemStorage.getInstance(world)
+        .get(BlockEntity.posFromNbt(chunk.getPos(), nbt));
 
     if (attachment == null) {
       return;

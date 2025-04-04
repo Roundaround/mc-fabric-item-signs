@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.4")
+  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.5")
 }

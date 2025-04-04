@@ -10,6 +10,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.component.ComponentMap;
+import net.minecraft.component.ComponentsAccess;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,6 +19,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -86,7 +88,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Override
-  protected void readComponents(BlockEntity.ComponentsAccess components) {
+  protected void readComponents(ComponentsAccess components) {
     super.readComponents(components);
     this.itemsigns$editAttachment((attachment) -> attachment.editAsList(components.getOrDefault(
         DataComponentTypes.CONTAINER,
@@ -104,6 +106,18 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Override
   public void removeFromCopiedStackNbt(NbtCompound nbt) {
     nbt.remove("Items");
+  }
+
+  @Override
+  public void onBlockReplaced(BlockPos pos, BlockState oldState) {
+    super.onBlockReplaced(pos, oldState);
+
+    if (this.world == null || !(this.world instanceof ServerWorld serverWorld)) {
+      return;
+    }
+
+    ItemScatterer.spawn(serverWorld, pos, this.itemsigns$getItems());
+    SignItemStorage.getInstance(serverWorld).remove(pos);
   }
 
   @Unique
