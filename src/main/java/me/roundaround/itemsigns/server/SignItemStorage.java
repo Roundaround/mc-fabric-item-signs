@@ -52,8 +52,9 @@ public class SignItemStorage extends PersistentState {
   }
 
   public void remove(BlockPos blockPos) {
-    this.attachments.remove(blockPos);
-    this.markDirty();
+    if (this.attachments.remove(blockPos) != null) {
+      this.markDirty();
+    }
   }
 
   private static SignItemStorage fromNbt(NbtCompound nbtRoot, RegistryWrapper.WrapperLookup registryLookup) {
