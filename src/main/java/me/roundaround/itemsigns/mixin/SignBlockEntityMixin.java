@@ -77,11 +77,17 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
   @Override
   public DefaultedList<ItemStack> itemsigns$getItems() {
+    if (!this.itemsigns$hasAttachment()) {
+      return DefaultedList.ofSize(2, ItemStack.EMPTY);
+    }
     return this.itemsigns$getAttachment().getAll();
   }
 
   @Override
   public void clear() {
+    if (!this.itemsigns$hasAttachment()) {
+      return;
+    }
     this.itemsigns$editAttachment(SignItemsAttachment::clear);
   }
 
@@ -123,6 +129,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
   @Unique
   private ItemStack itemsigns$getItem(int index) {
+    if (!this.itemsigns$hasAttachment()) {
+      return ItemStack.EMPTY;
+    }
     return this.itemsigns$getAttachment().get(index);
   }
 
@@ -133,6 +142,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
   @Unique
   public boolean itemsigns$hasItem(int index) {
+    if (!this.itemsigns$hasAttachment()) {
+      return false;
+    }
     return this.itemsigns$getAttachment().hasItem(index);
   }
 
@@ -151,6 +163,12 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
         1f,
         1f
     );
+  }
+
+  @SuppressWarnings("UnstableApiUsage")
+  @Unique
+  private boolean itemsigns$hasAttachment() {
+    return this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
   }
 
   @SuppressWarnings("UnstableApiUsage")
