@@ -94,18 +94,6 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     this.itemsigns$editAttachment(SignItemsAttachment::clear);
   }
 
-  @Override
-  public void onBlockReplaced(BlockPos pos, BlockState oldState) {
-    super.onBlockReplaced(pos, oldState);
-
-    if (this.world == null || !(this.world instanceof ServerWorld serverWorld)) {
-      return;
-    }
-
-    ItemScatterer.spawn(serverWorld, pos, this.itemsigns$getItems());
-    SignItemStorage.getInstance(serverWorld).remove(pos);
-  }
-
   @Unique
   private int itemsigns$getItemIndex(PlayerEntity player) {
     return this.itemsigns$getItemIndex(this.isPlayerFacingFront(player));
