@@ -21,6 +21,6 @@
     }
   },
   "depends": {
-    "fabric-data-attachment-api-v1": ">=0.115.0"
+    "fabric-data-attachment-api-v1": ">=0.123.2"
   }
 }

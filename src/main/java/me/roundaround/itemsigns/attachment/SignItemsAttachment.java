@@ -70,7 +70,7 @@ public class SignItemsAttachment {
     return SignItemsAttachment.CODEC.parse(registryLookup.getOps(NbtOps.INSTANCE), nbt).getOrThrow();
   }
 
-  private static DefaultedList<ItemStack> createEmptyList() {
+  public static DefaultedList<ItemStack> createEmptyList() {
     return DefaultedList.ofSize(2, ItemStack.EMPTY);
   }
 
