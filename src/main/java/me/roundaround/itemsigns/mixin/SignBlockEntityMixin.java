@@ -9,13 +9,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.component.ComponentsAccess;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -37,6 +32,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
   @Shadow
   public abstract boolean isPlayerFacingFront(PlayerEntity player);
+
+  @Shadow
+  protected abstract void updateListeners();
 
   @Override
   public boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
@@ -78,40 +76,22 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Override
+  @SuppressWarnings("UnstableApiUsage")
   public DefaultedList<ItemStack> itemsigns$getItems() {
-    if (!this.itemsigns$hasAttachment()) {
-      return DefaultedList.ofSize(2, ItemStack.EMPTY);
+    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
+    if (attachment == null) {
+      return SignItemsAttachment.createEmptyList();
     }
-    return this.itemsigns$getAttachment().getAll();
+    return attachment.getAll();
   }
 
   @Override
+  @SuppressWarnings("UnstableApiUsage")
   public void clear() {
-    if (!this.itemsigns$hasAttachment()) {
+    if (!this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS)) {
       return;
     }
     this.itemsigns$editAttachment(SignItemsAttachment::clear);
-  }
-
-  @Override
-  protected void readComponents(ComponentsAccess components) {
-    super.readComponents(components);
-    this.itemsigns$editAttachment((attachment) -> attachment.editAsList(components.getOrDefault(
-        DataComponentTypes.CONTAINER,
-        ContainerComponent.DEFAULT
-    )::copyTo));
-  }
-
-  @Override
-  protected void addComponents(ComponentMap.Builder builder) {
-    super.addComponents(builder);
-    builder.add(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.itemsigns$getAttachment().getAll()));
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public void removeFromCopiedStackNbt(NbtCompound nbt) {
-    nbt.remove("Items");
   }
 
   @Override
@@ -142,11 +122,13 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
+  @SuppressWarnings("UnstableApiUsage")
   private ItemStack itemsigns$getItem(int index) {
-    if (!this.itemsigns$hasAttachment()) {
+    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
+    if (attachment == null) {
       return ItemStack.EMPTY;
     }
-    return this.itemsigns$getAttachment().get(index);
+    return attachment.get(index);
   }
 
   @Unique
@@ -155,11 +137,13 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
+  @SuppressWarnings("UnstableApiUsage")
   public boolean itemsigns$hasItem(int index) {
-    if (!this.itemsigns$hasAttachment()) {
+    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
+    if (attachment == null) {
       return false;
     }
-    return this.itemsigns$getAttachment().hasItem(index);
+    return attachment.hasItem(index);
   }
 
   @Unique
@@ -167,7 +151,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     BlockPos blockPos = this.getPos();
 
     this.itemsigns$editAttachment((attachment) -> attachment.set(index, stack));
-    this.markDirty();
+    this.updateListeners();
 
     world.playSound(
         null,
@@ -179,20 +163,8 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     );
   }
 
-  @SuppressWarnings("UnstableApiUsage")
   @Unique
-  private boolean itemsigns$hasAttachment() {
-    return this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
-  }
-
   @SuppressWarnings("UnstableApiUsage")
-  @Unique
-  private SignItemsAttachment itemsigns$getAttachment() {
-    return this.getAttachedOrCreate(ItemSignsAttachmentTypes.SIGN_ITEMS);
-  }
-
-  @SuppressWarnings("UnstableApiUsage")
-  @Unique
   private void itemsigns$editAttachment(Function<SignItemsAttachment, SignItemsAttachment> editor) {
     SignItemsAttachment edited = editor.apply(this.getAttachedOrCreate(ItemSignsAttachmentTypes.SIGN_ITEMS));
     this.setAttached(ItemSignsAttachmentTypes.SIGN_ITEMS, edited);
