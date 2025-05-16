@@ -1,19 +1,21 @@
 package me.roundaround.itemsigns.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import me.roundaround.itemsigns.ItemSignsMod;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.server.SignItemStorage;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ProtoChunk;
 import net.minecraft.world.chunk.SerializedChunk;
-import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.storage.StorageKey;
 import org.spongepowered.asm.mixin.Final;
@@ -21,7 +23,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashMap;
@@ -33,35 +34,24 @@ public abstract class SerializedChunkMixin {
   @Final
   private List<NbtCompound> blockEntities;
 
-  @Inject(
-      method = "method_61797",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getBoolean(Ljava/lang/String;Z)Z")
+  @WrapOperation(
+      method = "method_61797", at = @At(
+      value = "INVOKE",
+      target = "Lnet/minecraft/block/entity/BlockEntity;createFromNbt(Lnet/minecraft/util/math/BlockPos;" +
+               "Lnet/minecraft/block/BlockState;Lnet/minecraft/nbt/NbtCompound;" +
+               "Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;)Lnet/minecraft/block/entity/BlockEntity;"
   )
-  private static void beforeProcessingBlockEntity(
-      List<NbtCompound> entities,
-      ServerWorld world,
-      List<NbtCompound> blockEntities,
-      WorldChunk chunk,
-      CallbackInfo ci,
-      @Local NbtCompound nbt
+  )
+  private static BlockEntity spliceItemsIntoNbt(
+      BlockPos pos,
+      BlockState state,
+      NbtCompound nbt,
+      RegistryWrapper.WrapperLookup registries,
+      Operation<BlockEntity> original,
+      @Local(argsOnly = true) ServerWorld world
   ) {
-    if (!nbt.contains("x") || !nbt.contains("y") || !nbt.contains("z")) {
-      return;
-    }
-
-    SignItemsAttachment attachment = SignItemStorage.getInstance(world)
-        .get(BlockEntity.posFromNbt(chunk.getPos(), nbt));
-
-    if (attachment == null) {
-      return;
-    }
-
-    nbt.put(
-        SignItemsAttachment.NBT_KEY,
-        SignItemsAttachment.CODEC,
-        world.getRegistryManager().getOps(NbtOps.INSTANCE),
-        attachment
-    );
+    SignItemsAttachment.attach(nbt, world, pos, registries);
+    return original.call(pos, state, nbt, registries);
   }
 
   @Inject(
