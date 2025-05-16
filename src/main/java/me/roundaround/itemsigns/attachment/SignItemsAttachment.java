@@ -3,18 +3,21 @@ package me.roundaround.itemsigns.attachment;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import me.roundaround.itemsigns.generated.Constants;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class SignItemsAttachment {
+  public static final String NBT_KEY = Identifier.of(Constants.MOD_ID, "items").toString();
   public static final Codec<SignItemsAttachment> CODEC =
       RecordCodecBuilder.create((instance) -> instance.group(Codec.list(
           ItemStack.OPTIONAL_CODEC).fieldOf("items").forGetter((inst) -> inst.items))

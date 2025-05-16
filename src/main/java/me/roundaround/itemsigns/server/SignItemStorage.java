@@ -6,11 +6,12 @@ import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.generated.Constants;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateType;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class SignItemStorage extends PersistentState {
   public static final Codec<SignItemStorage> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Codec.list(
@@ -22,7 +23,7 @@ public class SignItemStorage extends PersistentState {
       null
   );
 
-  private final HashMap<BlockPos, SignItemsAttachment> attachments = new HashMap<>();
+  private final HashMap<ChunkPos, HashMap<BlockPos, SignItemsAttachment>> attachments = new HashMap<>();
 
   private SignItemStorage() {
     this.markDirty();
@@ -30,32 +31,50 @@ public class SignItemStorage extends PersistentState {
 
   private SignItemStorage(List<Entry> entries) {
     for (Entry entry : entries) {
-      this.attachments.put(entry.blockPos(), entry.attachment());
+      this.put(entry.blockPos(), entry.attachment());
     }
   }
 
   public SignItemsAttachment get(BlockPos blockPos) {
-    return this.attachments.get(blockPos);
+    return this.get(new ChunkPos(blockPos)).map((chunk) -> chunk.get(blockPos)).orElse(null);
   }
 
-  public void set(BlockPos blockPos, SignItemsAttachment attachment) {
-    if (attachment.isEmpty()) {
+  public void set(BlockPos blockPos, @Nullable SignItemsAttachment attachment) {
+    if (attachment == null || attachment.isEmpty()) {
       this.remove(blockPos);
       return;
     }
 
-    this.attachments.put(blockPos, attachment);
+    this.put(blockPos, attachment);
     this.markDirty();
   }
 
   public void remove(BlockPos blockPos) {
-    if (this.attachments.remove(blockPos) != null) {
-      this.markDirty();
-    }
+    this.get(new ChunkPos(blockPos)).ifPresent((chunk) -> {
+      if (chunk.remove(blockPos) != null) {
+        this.markDirty();
+      }
+    });
+  }
+
+  public HashMap<BlockPos, SignItemsAttachment> allInChunk(ChunkPos pos) {
+    return this.get(pos).map(HashMap::new).orElseGet(HashMap::new);
+  }
+
+  private Optional<HashMap<BlockPos, SignItemsAttachment>> get(ChunkPos pos) {
+    return Optional.ofNullable(this.attachments.get(pos));
+  }
+
+  private void put(BlockPos blockPos, SignItemsAttachment attachment) {
+    this.attachments.computeIfAbsent(new ChunkPos(blockPos), (chunkPos) -> new HashMap<>()).put(blockPos, attachment);
   }
 
   private List<Entry> getEntries() {
-    return this.attachments.entrySet().stream().map((entry) -> new Entry(entry.getKey(), entry.getValue())).toList();
+    return this.attachments.values()
+        .stream()
+        .flatMap((chunk) -> chunk.entrySet().stream())
+        .map((entry) -> new Entry(entry.getKey(), entry.getValue()))
+        .toList();
   }
 
   public static SignItemStorage getInstance(ServerWorld world) {

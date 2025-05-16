@@ -1,6 +1,5 @@
 package me.roundaround.itemsigns;
 
-import me.roundaround.itemsigns.attachment.ItemSignsAttachmentTypes;
 import me.roundaround.gradle.api.annotation.Entrypoint;
 import me.roundaround.itemsigns.generated.Constants;
 import net.fabricmc.api.ModInitializer;
@@ -13,6 +12,5 @@ public class ItemSignsMod implements ModInitializer {
 
   @Override
   public void onInitialize() {
-    ItemSignsAttachmentTypes.init();
   }
 }

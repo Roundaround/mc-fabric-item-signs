@@ -1,6 +1,6 @@
 package me.roundaround.itemsigns.mixin;
 
-import me.roundaround.itemsigns.attachment.ItemSignsAttachmentTypes;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.block.entity.SignBlockEntityExtensions;
 import me.roundaround.itemsigns.server.SignItemStorage;
@@ -11,6 +11,9 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -18,10 +21,15 @@ import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 @Mixin(SignBlockEntity.class)
@@ -30,11 +38,33 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     super(type, pos, state);
   }
 
+  @Unique
+  @Nullable
+  private SignItemsAttachment itemsigns$attachment = null;
+
   @Shadow
   public abstract boolean isPlayerFacingFront(PlayerEntity player);
 
   @Shadow
   protected abstract void updateListeners();
+
+  @ModifyReturnValue(method = "toInitialChunkDataNbt", at = @At("RETURN"))
+  private NbtCompound afterInitialChunkDataNbtGenerated(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+    Optional.ofNullable(this.itemsigns$attachment)
+        .ifPresent((attachment) -> nbt.put(
+            SignItemsAttachment.NBT_KEY,
+            SignItemsAttachment.CODEC,
+            registries.getOps(NbtOps.INSTANCE),
+            attachment
+        ));
+    return nbt;
+  }
+
+  @Inject(method = "readNbt", at = @At("RETURN"))
+  private void afterReadNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
+    nbt.get(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE))
+        .ifPresent((attachment) -> this.itemsigns$attachment = attachment);
+  }
 
   @Override
   public boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
@@ -76,19 +106,16 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Override
-  @SuppressWarnings("UnstableApiUsage")
   public DefaultedList<ItemStack> itemsigns$getItems() {
-    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
-    if (attachment == null) {
+    if (this.itemsigns$attachment == null) {
       return SignItemsAttachment.createEmptyList();
     }
-    return attachment.getAll();
+    return this.itemsigns$attachment.getAll();
   }
 
   @Override
-  @SuppressWarnings("UnstableApiUsage")
   public void clear() {
-    if (!this.hasAttached(ItemSignsAttachmentTypes.SIGN_ITEMS)) {
+    if (this.itemsigns$attachment == null) {
       return;
     }
     this.itemsigns$editAttachment(SignItemsAttachment::clear);
@@ -122,13 +149,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  @SuppressWarnings("UnstableApiUsage")
   private ItemStack itemsigns$getItem(int index) {
-    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
-    if (attachment == null) {
+    if (this.itemsigns$attachment == null) {
       return ItemStack.EMPTY;
     }
-    return attachment.get(index);
+    return this.itemsigns$attachment.get(index);
   }
 
   @Unique
@@ -137,13 +162,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  @SuppressWarnings("UnstableApiUsage")
   public boolean itemsigns$hasItem(int index) {
-    SignItemsAttachment attachment = this.getAttached(ItemSignsAttachmentTypes.SIGN_ITEMS);
-    if (attachment == null) {
+    if (this.itemsigns$attachment == null) {
       return false;
     }
-    return attachment.hasItem(index);
+    return this.itemsigns$attachment.hasItem(index);
   }
 
   @Unique
@@ -164,14 +187,13 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  @SuppressWarnings("UnstableApiUsage")
   private void itemsigns$editAttachment(Function<SignItemsAttachment, SignItemsAttachment> editor) {
-    SignItemsAttachment edited = editor.apply(this.getAttachedOrCreate(ItemSignsAttachmentTypes.SIGN_ITEMS));
-    this.setAttached(ItemSignsAttachmentTypes.SIGN_ITEMS, edited);
+    this.itemsigns$attachment = editor.apply(Optional.ofNullable(this.itemsigns$attachment)
+        .orElse(SignItemsAttachment.DEFAULT));
 
     World world = this.getWorld();
     if (world instanceof ServerWorld serverWorld) {
-      SignItemStorage.getInstance(serverWorld).set(this.getPos(), edited);
+      SignItemStorage.getInstance(serverWorld).set(this.getPos(), this.itemsigns$attachment);
     }
   }
 }
