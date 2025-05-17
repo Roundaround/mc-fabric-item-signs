@@ -45,7 +45,7 @@ public abstract class ItemStackMixin {
     // Try to allow vanilla to handle the item use first. If vanilla returns back PASS (as in it did nothing), we
     // then can try to place/remove the sign's item.
     ActionResult vanillaResult = callOriginal.get();
-    if (!(vanillaResult instanceof ActionResult.Pass)) {
+    if (vanillaResult != ActionResult.PASS) {
       return vanillaResult;
     }
 

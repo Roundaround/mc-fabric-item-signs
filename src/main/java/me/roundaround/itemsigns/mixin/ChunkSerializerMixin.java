@@ -10,14 +10,14 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.SerializedChunk;
+import net.minecraft.world.ChunkSerializer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(SerializedChunk.class)
-public abstract class SerializedChunkMixin {
+@Mixin(ChunkSerializer.class)
+public abstract class ChunkSerializerMixin {
   @WrapOperation(
-      method = "method_61797", at = @At(
+      method = "method_39797", at = @At(
       value = "INVOKE",
       target = "Lnet/minecraft/block/entity/BlockEntity;createFromNbt(Lnet/minecraft/util/math/BlockPos;" +
                "Lnet/minecraft/block/BlockState;Lnet/minecraft/nbt/NbtCompound;" +

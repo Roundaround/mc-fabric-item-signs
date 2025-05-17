@@ -9,9 +9,9 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.block.entity.SignBlockEntityRenderer;
 import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -116,7 +116,8 @@ public abstract class SignBlockEntityRendererMixin {
       matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180f));
     }
 
-    matrices.translate(this.getTextOffset());
+    Vec3d translation = this.getTextOffset();
+    matrices.translate(translation.x, translation.y, translation.z);
     float scale = 0.5f * this.getTextScale();
     matrices.scale(-scale, scale, -scale);
   }

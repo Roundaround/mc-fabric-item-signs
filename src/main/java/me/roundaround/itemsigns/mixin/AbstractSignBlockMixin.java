@@ -15,6 +15,7 @@ import net.minecraft.item.SignChangingItem;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ItemActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -30,7 +31,7 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
   }
 
   @WrapMethod(method = "onUseWithItem")
-  private ActionResult preOnUseWithItem(
+  private ItemActionResult preOnUseWithItem(
       ItemStack stack,
       BlockState state,
       World world,
@@ -38,9 +39,9 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
       PlayerEntity player,
       Hand hand,
       BlockHitResult hit,
-      Operation<ActionResult> original
+      Operation<ItemActionResult> original
   ) {
-    Supplier<ActionResult> callOriginal = () -> original.call(stack, state, world, pos, player, hand, hit);
+    Supplier<ItemActionResult> callOriginal = () -> original.call(stack, state, world, pos, player, hand, hit);
 
     if (!(world.getBlockEntity(pos) instanceof SignBlockEntity signBlockEntity)) {
       return callOriginal.get();
@@ -61,8 +62,8 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
       // If the item is a "sign changing item", try running the vanilla behavior first. If it is unsuccessful in
       // modifying the block, then we step in and try to mount the item instead. That is to say, if the result is a
       // SUCCESS or CONSUME, just keep that result as-is.
-      ActionResult vanillaResult = callOriginal.get();
-      if (!(vanillaResult instanceof ActionResult.PassToDefaultBlockAction)) {
+      ItemActionResult vanillaResult = callOriginal.get();
+      if (vanillaResult == ItemActionResult.SUCCESS || vanillaResult == ItemActionResult.CONSUME) {
         return vanillaResult;
       }
     }
@@ -71,12 +72,12 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
       // If there is an item on the sign already, try to remove it.
 
       if (world.isClient) {
-        return canModify || waxed ? ActionResult.SUCCESS : ActionResult.CONSUME;
+        return canModify || waxed ? ItemActionResult.SUCCESS : ItemActionResult.CONSUME;
       }
 
       if (canModify && !waxed) {
         signBlockEntity.itemsigns$dropItemFacingPlayer(world, player);
-        return ActionResult.SUCCESS;
+        return ItemActionResult.SUCCESS;
       }
 
       // If we fail to remove the existing item, simply fall back to vanilla behavior.
@@ -91,10 +92,10 @@ public abstract class AbstractSignBlockMixin extends BlockWithEntity {
     // If we've gotten here, that means the sign is empty and the player is standing and holding an item.
 
     if (canModify && !waxed && signBlockEntity.itemsigns$placeItemFacingPlayer(world, player, stack)) {
-      return ActionResult.SUCCESS;
+      return ItemActionResult.SUCCESS;
     }
 
-    return ActionResult.PASS_TO_DEFAULT_BLOCK_ACTION;
+    return ItemActionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
   }
 
   @Override
