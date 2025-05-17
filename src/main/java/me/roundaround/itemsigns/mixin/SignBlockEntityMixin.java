@@ -72,7 +72,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     if (this.itemsigns$hasItem(index)) {
       return false;
     }
-    this.itemsigns$setItemAndUpdate(world, index, stack.splitUnlessCreative(1, player));
+    this.itemsigns$setItem(world, index, stack.splitUnlessCreative(1, player));
     return true;
   }
 
@@ -89,7 +89,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     }
 
     ItemStack stack = this.itemsigns$getItem(index);
-    this.itemsigns$setItemAndUpdate(world, index, ItemStack.EMPTY);
+    this.itemsigns$setItem(world, index, ItemStack.EMPTY);
     if (!player.isInCreativeMode()) {
       Block.dropStack(world, this.getPos(), stack);
     }
@@ -111,6 +111,12 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
       return SignItemsAttachment.createEmptyList();
     }
     return this.itemsigns$attachment.getAll();
+  }
+
+  @Override
+  public void itemsigns$setItem(int index, ItemStack stack) {
+    this.itemsigns$editAttachment((attachment) -> attachment.set(index, stack));
+    this.updateListeners();
   }
 
   @Override
@@ -157,12 +163,12 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  public boolean itemsigns$hasItem(boolean front) {
+  private boolean itemsigns$hasItem(boolean front) {
     return this.itemsigns$hasItem(this.itemsigns$getItemIndex(front));
   }
 
   @Unique
-  public boolean itemsigns$hasItem(int index) {
+  private boolean itemsigns$hasItem(int index) {
     if (this.itemsigns$attachment == null) {
       return false;
     }
@@ -170,15 +176,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  private void itemsigns$setItemAndUpdate(World world, int index, ItemStack stack) {
-    BlockPos blockPos = this.getPos();
-
-    this.itemsigns$editAttachment((attachment) -> attachment.set(index, stack));
-    this.updateListeners();
-
+  private void itemsigns$setItem(World world, int index, ItemStack stack) {
+    this.itemsigns$setItem(index, stack);
     world.playSound(
         null,
-        blockPos,
+        this.getPos(),
         stack.isEmpty() ? SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM : SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM,
         SoundCategory.NEUTRAL,
         1f,

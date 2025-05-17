@@ -30,6 +30,10 @@ public interface SignBlockEntityExtensions extends Clearable {
     return null;
   }
 
+  default void itemsigns$setItem(int index, ItemStack stack) {
+  }
+
   @Override
-  default void clear() {}
+  default void clear() {
+  }
 }

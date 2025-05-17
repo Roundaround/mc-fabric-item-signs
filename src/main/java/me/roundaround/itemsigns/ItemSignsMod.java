@@ -2,6 +2,7 @@ package me.roundaround.itemsigns;
 
 import me.roundaround.gradle.api.annotation.Entrypoint;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
+import me.roundaround.itemsigns.compat.BetterHangingSignsRemover;
 import me.roundaround.itemsigns.event.LoadFromNbtEvents;
 import me.roundaround.itemsigns.generated.Constants;
 import me.roundaround.itemsigns.server.SignItemStorage;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 @Entrypoint(Entrypoint.MAIN)
 public class ItemSignsMod implements ModInitializer {
   public static final Logger LOGGER = LogManager.getLogger(Constants.MOD_ID);
+  public static final BetterHangingSignsRemover BHS_REMOVER = new BetterHangingSignsRemover();
 
   @Override
   public void onInitialize() {
@@ -57,5 +59,7 @@ public class ItemSignsMod implements ModInitializer {
         storage.remove(pos);
       });
     });
+
+    BHS_REMOVER.init();
   }
 }
