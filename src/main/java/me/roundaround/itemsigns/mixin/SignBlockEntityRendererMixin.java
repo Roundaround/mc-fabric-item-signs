@@ -6,8 +6,8 @@ import net.minecraft.block.WoodType;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.AbstractSignBlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
+import net.minecraft.client.render.block.entity.SignBlockEntityRenderer;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
@@ -22,16 +22,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(AbstractSignBlockEntityRenderer.class)
-public abstract class AbstractSignBlockEntityRendererMixin {
+@Mixin(SignBlockEntityRenderer.class)
+public abstract class SignBlockEntityRendererMixin {
   @Unique
   protected ItemRenderer itemsigns$itemRenderer;
 
   @Shadow
-  protected abstract Vec3d getTextOffset();
+  abstract Vec3d getTextOffset();
 
   @Shadow
-  protected abstract float getTextScale();
+  public abstract float getTextScale();
 
   @Inject(method = "<init>", at = @At("RETURN"))
   private void atEndOfConstructor(BlockEntityRendererFactory.Context context, CallbackInfo ci) {

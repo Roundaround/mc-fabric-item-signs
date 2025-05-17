@@ -133,7 +133,7 @@ public final class BetterHangingSignsRemover {
       ItemDisplayEntity display = hangDisplay.get();
 
       if (root.getCommandTags().contains(TAG_HASITEM)) {
-        held = display.getItemStack().copy();
+        held = display.getStackReference(0).get().copy();
       }
 
       display.getPassengerList().forEach((p) -> {
