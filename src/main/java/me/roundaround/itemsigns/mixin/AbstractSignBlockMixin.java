@@ -2,15 +2,20 @@ package me.roundaround.itemsigns.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.block.AbstractSignBlock;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SignChangingItem;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -19,7 +24,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.function.Supplier;
 
 @Mixin(AbstractSignBlock.class)
-public abstract class AbstractSignBlockMixin {
+public abstract class AbstractSignBlockMixin extends BlockWithEntity {
+  protected AbstractSignBlockMixin(Settings settings) {
+    super(settings);
+  }
+
   @WrapMethod(method = "onUseWithItem")
   private ActionResult preOnUseWithItem(
       ItemStack stack,
@@ -86,5 +95,18 @@ public abstract class AbstractSignBlockMixin {
     }
 
     return ActionResult.PASS_TO_DEFAULT_BLOCK_ACTION;
+  }
+
+  @Override
+  protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    if (!state.isOf(newState.getBlock())) {
+      BlockEntity blockEntity = world.getBlockEntity(pos);
+      if (blockEntity instanceof SignBlockEntity signBlockEntity) {
+        ItemScatterer.spawn(world, pos, signBlockEntity.itemsigns$getItems());
+        SignItemStorage.getInstance((ServerWorld) world).remove(pos);
+      }
+
+      super.onStateReplaced(state, world, pos, newState, moved);
+    }
   }
 }

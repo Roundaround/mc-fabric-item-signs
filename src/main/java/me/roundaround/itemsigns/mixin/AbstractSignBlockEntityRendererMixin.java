@@ -10,8 +10,8 @@ import net.minecraft.client.render.block.entity.AbstractSignBlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -99,7 +99,7 @@ public abstract class AbstractSignBlockEntityRendererMixin {
     this.itemsigns$applyItemTransforms(matrices, front);
     this.itemsigns$itemRenderer.renderItem(
         stack,
-        ItemDisplayContext.FIXED,
+        ModelTransformationMode.FIXED,
         light,
         overlay,
         matrices,

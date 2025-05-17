@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 @Entrypoint(Entrypoint.MAIN)
 public class ItemSignsMod implements ModInitializer {
@@ -30,10 +31,12 @@ public class ItemSignsMod implements ModInitializer {
         return state;
       }
 
-      SignItemsAttachment attachment = SignItemStorage.getInstance(world).get(pos);
-      if (attachment != null) {
-        nbt.put(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE), attachment);
-      }
+      Optional.ofNullable(SignItemStorage.getInstance(world).get(pos))
+          .ifPresent((attachment) -> SignItemsAttachment.CODEC.encodeStart(
+                  registries.getOps(NbtOps.INSTANCE),
+                  attachment
+              )
+              .ifSuccess((nbtElement) -> nbt.put(SignItemsAttachment.NBT_KEY, nbtElement)));
       return state;
     });
 

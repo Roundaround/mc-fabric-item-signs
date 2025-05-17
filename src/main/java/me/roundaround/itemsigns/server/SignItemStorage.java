@@ -4,11 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.generated.Constants;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -16,12 +18,6 @@ import java.util.*;
 public class SignItemStorage extends PersistentState {
   public static final Codec<SignItemStorage> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Codec.list(
       Entry.CODEC).fieldOf("Signs").forGetter(SignItemStorage::getEntries)).apply(instance, SignItemStorage::new));
-  public static final PersistentStateType<SignItemStorage> STATE_TYPE = new PersistentStateType<>(
-      Constants.MOD_ID,
-      SignItemStorage::new,
-      CODEC,
-      null
-  );
 
   private final HashMap<ChunkPos, HashMap<BlockPos, SignItemsAttachment>> attachments = new HashMap<>();
 
@@ -33,6 +29,11 @@ public class SignItemStorage extends PersistentState {
     for (Entry entry : entries) {
       this.put(entry.blockPos(), entry.attachment());
     }
+  }
+
+  @Override
+  public NbtCompound writeNbt(NbtCompound rootNbt, RegistryWrapper.WrapperLookup registryLookup) {
+    return (NbtCompound) CODEC.encodeStart(registryLookup.getOps(NbtOps.INSTANCE), this).getOrThrow();
   }
 
   public SignItemsAttachment get(BlockPos blockPos) {
@@ -78,7 +79,12 @@ public class SignItemStorage extends PersistentState {
   }
 
   public static SignItemStorage getInstance(ServerWorld world) {
-    return world.getPersistentStateManager().getOrCreate(STATE_TYPE);
+    Type<SignItemStorage> persistentStateType = new PersistentState.Type<>(
+        SignItemStorage::new,
+        (nbt, registryLookup) -> CODEC.parse(registryLookup.getOps(NbtOps.INSTANCE), nbt).getOrThrow(),
+        null
+    );
+    return world.getPersistentStateManager().getOrCreate(persistentStateType, Constants.MOD_ID);
   }
 
   private record Entry(BlockPos blockPos, SignItemsAttachment attachment) {

@@ -17,7 +17,6 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -51,19 +50,16 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @ModifyReturnValue(method = "toInitialChunkDataNbt", at = @At("RETURN"))
   private NbtCompound afterInitialChunkDataNbtGenerated(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
     Optional.ofNullable(this.itemsigns$attachment)
-        .ifPresent((attachment) -> nbt.put(
-            SignItemsAttachment.NBT_KEY,
-            SignItemsAttachment.CODEC,
-            registries.getOps(NbtOps.INSTANCE),
-            attachment
-        ));
+        .ifPresent((attachment) -> SignItemsAttachment.CODEC.encodeStart(registries.getOps(NbtOps.INSTANCE), attachment)
+            .ifSuccess((nbtElement) -> nbt.put(SignItemsAttachment.NBT_KEY, nbtElement)));
     return nbt;
   }
 
   @Inject(method = "readNbt", at = @At("RETURN"))
   private void afterReadNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-    nbt.get(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE))
-        .ifPresent((attachment) -> this.itemsigns$attachment = attachment);
+    Optional.ofNullable(nbt.get(SignItemsAttachment.NBT_KEY))
+        .ifPresent((nbtElement) -> SignItemsAttachment.CODEC.parse(registries.getOps(NbtOps.INSTANCE), nbtElement)
+            .ifSuccess((attachment) -> this.itemsigns$attachment = attachment));
   }
 
   @Override
@@ -125,18 +121,6 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
       return;
     }
     this.itemsigns$editAttachment(SignItemsAttachment::clear);
-  }
-
-  @Override
-  public void onBlockReplaced(BlockPos pos, BlockState oldState) {
-    super.onBlockReplaced(pos, oldState);
-
-    if (this.world == null || !(this.world instanceof ServerWorld serverWorld)) {
-      return;
-    }
-
-    ItemScatterer.spawn(serverWorld, pos, this.itemsigns$getItems());
-    SignItemStorage.getInstance(serverWorld).remove(pos);
   }
 
   @Unique
