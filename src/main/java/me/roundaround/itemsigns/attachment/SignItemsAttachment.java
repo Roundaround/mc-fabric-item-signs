@@ -4,17 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import me.roundaround.itemsigns.generated.Constants;
-import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -70,18 +64,6 @@ public class SignItemsAttachment {
 
   public static DefaultedList<ItemStack> createEmptyList() {
     return DefaultedList.ofSize(2, ItemStack.EMPTY);
-  }
-
-  public static void attach(
-      NbtCompound nbt,
-      ServerWorld world,
-      BlockPos pos,
-      RegistryWrapper.WrapperLookup registries
-  ) {
-    SignItemsAttachment attachment = SignItemStorage.getInstance(world).get(pos);
-    if (attachment != null) {
-      nbt.put(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE), attachment);
-    }
   }
 
   private static DefaultedList<ItemStack> copyFromList(List<ItemStack> source) {

@@ -2,7 +2,7 @@ package me.roundaround.itemsigns.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.roundaround.itemsigns.attachment.SignItemsAttachment;
+import me.roundaround.itemsigns.event.LoadFromNbtEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -36,7 +36,8 @@ public abstract class ChunkRegionMixin {
       RegistryWrapper.WrapperLookup registries,
       Operation<BlockEntity> original
   ) {
-    SignItemsAttachment.attach(nbt, this.world, pos, registries);
-    return original.call(pos, state, nbt, registries);
+    BlockState adjustedState = LoadFromNbtEvents.BLOCK_ENTITY.invoker()
+        .beforeBlockEntityLoaded(nbt, this.world, pos, state, registries);
+    return original.call(pos, adjustedState, nbt, registries);
   }
 }
