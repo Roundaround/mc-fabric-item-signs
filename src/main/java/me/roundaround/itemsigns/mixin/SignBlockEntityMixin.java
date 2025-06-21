@@ -17,6 +17,7 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.storage.ReadView;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
@@ -60,9 +61,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     return nbt;
   }
 
-  @Inject(method = "readNbt", at = @At("RETURN"))
-  private void afterReadNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-    nbt.get(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE))
+  @Inject(method = "readData", at = @At("RETURN"))
+  private void afterReadData(ReadView view, CallbackInfo ci) {
+    view.read(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC)
         .ifPresent((attachment) -> this.itemsigns$attachment = attachment);
   }
 
