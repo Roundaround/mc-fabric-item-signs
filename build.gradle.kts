@@ -7,5 +7,5 @@ repositories {
 }
 
 dependencies {
-  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.6")
+  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.9")
 }

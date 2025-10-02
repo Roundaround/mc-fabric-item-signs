@@ -52,7 +52,7 @@ public abstract class ItemStackMixin {
     boolean canModify = player.canModifyBlocks();
     boolean waxed = signBlockEntity.isWaxed();
 
-    if (world.isClient) {
+    if (world.isClient()) {
       return canModify || waxed ? ActionResult.SUCCESS : ActionResult.CONSUME;
     }
 

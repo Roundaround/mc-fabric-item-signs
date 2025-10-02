@@ -2,7 +2,7 @@ package me.roundaround.itemsigns.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
-import me.roundaround.itemsigns.block.entity.SignBlockEntityExtensions;
+import me.roundaround.itemsigns.interfaces.SignBlockEntityExtensions;
 import me.roundaround.itemsigns.server.SignItemStorage;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

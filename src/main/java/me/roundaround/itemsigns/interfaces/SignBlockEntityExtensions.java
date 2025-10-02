@@ -1,4 +1,4 @@
-package me.roundaround.itemsigns.block.entity;
+package me.roundaround.itemsigns.interfaces;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;

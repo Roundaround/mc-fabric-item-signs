@@ -61,7 +61,7 @@ public abstract class AbstractSignBlockMixin {
     if (signBlockEntity.itemsigns$hasItemFacingPlayer(player)) {
       // If there is an item on the sign already, try to remove it.
 
-      if (world.isClient) {
+      if (world.isClient()) {
         return canModify || waxed ? ActionResult.SUCCESS : ActionResult.CONSUME;
       }
 
