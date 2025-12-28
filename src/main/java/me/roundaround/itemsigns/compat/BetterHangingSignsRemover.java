@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
+import net.minecraft.command.DefaultPermissions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.InteractionEntity;
 import net.minecraft.item.ItemStack;
@@ -170,7 +171,7 @@ public final class BetterHangingSignsRemover {
           "%d item(s) at [x, y, z]=[%s]", items.size(), pos.toShortString()
       );
       ItemSignsMod.LOGGER.warn(message);
-      world.getPlayers((p) -> p.hasPermissionLevel(world.getServer().getOpPermissionLevel()))
+      world.getPlayers((p) -> p.getPermissions().hasPermission(DefaultPermissions.GAMEMASTERS))
           .forEach((p) -> p.sendMessage(Text.of(message)));
     }
 

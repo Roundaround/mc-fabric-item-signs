@@ -3,9 +3,9 @@ plugins {
 }
 
 repositories {
-  mavenLocal()
+  maven("https://maven.rnda.dev/releases/")
 }
 
 dependencies {
-  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.9")
+  modImplementation("me.roundaround:blanksigns:1.0.1+1.21.11")
 }
