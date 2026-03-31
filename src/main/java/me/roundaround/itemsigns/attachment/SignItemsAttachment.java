@@ -4,25 +4,25 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import me.roundaround.itemsigns.generated.Constants;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class SignItemsAttachment {
-  public static final String NBT_KEY = Identifier.of(Constants.MOD_ID, "items").toString();
+  public static final String NBT_KEY = Identifier.fromNamespaceAndPath(Constants.MOD_ID, "items").toString();
   public static final Codec<SignItemsAttachment> CODEC =
       RecordCodecBuilder.create((instance) -> instance.group(Codec.list(
           ItemStack.OPTIONAL_CODEC).fieldOf("items").forGetter((inst) -> inst.items))
       .apply(instance, SignItemsAttachment::new));
-  public static final PacketCodec<ByteBuf, SignItemsAttachment> PACKET_CODEC = PacketCodecs.codec(CODEC);
+  public static final StreamCodec<ByteBuf, SignItemsAttachment> PACKET_CODEC = ByteBufCodecs.fromCodec(CODEC);
   public static final SignItemsAttachment DEFAULT = new SignItemsAttachment();
 
-  private final DefaultedList<ItemStack> items;
+  private final NonNullList<ItemStack> items;
 
   private SignItemsAttachment() {
     this(createEmptyList());
@@ -52,22 +52,22 @@ public class SignItemsAttachment {
     return this.items.isEmpty() || this.items.stream().allMatch(ItemStack::isEmpty);
   }
 
-  public DefaultedList<ItemStack> getAll() {
+  public NonNullList<ItemStack> getAll() {
     return copyFromList(this.items);
   }
 
-  public SignItemsAttachment editAsList(Consumer<DefaultedList<ItemStack>> editor) {
-    DefaultedList<ItemStack> list = this.getAll();
+  public SignItemsAttachment editAsList(Consumer<NonNullList<ItemStack>> editor) {
+    NonNullList<ItemStack> list = this.getAll();
     editor.accept(list);
     return new SignItemsAttachment(list);
   }
 
-  public static DefaultedList<ItemStack> createEmptyList() {
-    return DefaultedList.ofSize(2, ItemStack.EMPTY);
+  public static NonNullList<ItemStack> createEmptyList() {
+    return NonNullList.withSize(2, ItemStack.EMPTY);
   }
 
-  private static DefaultedList<ItemStack> copyFromList(List<ItemStack> source) {
-    DefaultedList<ItemStack> dest = createEmptyList();
+  private static NonNullList<ItemStack> copyFromList(List<ItemStack> source) {
+    NonNullList<ItemStack> dest = createEmptyList();
     for (int i = 0; i < Math.min(source.size(), 2); i++) {
       dest.set(i, source.get(i).copy());
     }

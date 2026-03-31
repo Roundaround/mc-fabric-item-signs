@@ -1,21 +1,21 @@
 package me.roundaround.itemsigns.interfaces;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Clearable;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public interface SignBlockEntityExtensions extends Clearable {
-  default boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
+  default boolean itemsigns$placeItemFacingPlayer(Level world, Player player, ItemStack stack) {
     return false;
   }
 
-  default boolean itemsigns$hasItemFacingPlayer(PlayerEntity player) {
+  default boolean itemsigns$hasItemFacingPlayer(Player player) {
     return false;
   }
 
-  default void itemsigns$dropItemFacingPlayer(World world, PlayerEntity player) {
+  default void itemsigns$dropItemFacingPlayer(Level world, Player player) {
   }
 
   default ItemStack itemsigns$getFrontStack() {
@@ -26,7 +26,7 @@ public interface SignBlockEntityExtensions extends Clearable {
     return ItemStack.EMPTY;
   }
 
-  default DefaultedList<ItemStack> itemsigns$getItems() {
+  default NonNullList<ItemStack> itemsigns$getItems() {
     return null;
   }
 
@@ -34,6 +34,6 @@ public interface SignBlockEntityExtensions extends Clearable {
   }
 
   @Override
-  default void clear() {
+  default void clearContent() {
   }
 }

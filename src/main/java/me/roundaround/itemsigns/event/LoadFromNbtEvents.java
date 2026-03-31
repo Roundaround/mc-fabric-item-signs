@@ -2,11 +2,11 @@ package me.roundaround.itemsigns.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class LoadFromNbtEvents {
   public static Event<BlockEntityLoad> BLOCK_ENTITY = EventFactory.createArrayBacked(
@@ -22,11 +22,11 @@ public final class LoadFromNbtEvents {
   @FunctionalInterface
   public interface BlockEntityLoad {
     BlockState beforeBlockEntityLoaded(
-        NbtCompound nbt,
-        ServerWorld world,
+        CompoundTag nbt,
+        ServerLevel world,
         BlockPos pos,
         BlockState state,
-        RegistryWrapper.WrapperLookup registries
+        HolderLookup.Provider registries
     );
   }
 }

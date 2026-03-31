@@ -5,30 +5,30 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.command.DefaultPermissions;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.InteractionEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.resource.ResourcePackManager;
-import net.minecraft.server.function.CommandFunctionManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.ItemScatterer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.ServerFunctionManager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.util.Util;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.Display.ItemDisplay;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Interaction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.minecraft.entity.decoration.DisplayEntity.ItemDisplayEntity;
+import static net.minecraft.world.entity.Display.ItemDisplay;
 
 public final class BetterHangingSignsRemover {
   private static final String TAG_MAIN = "ketketbetterhangingsign";
@@ -37,7 +37,7 @@ public final class BetterHangingSignsRemover {
   private static final String TAG_GLOW = "glow";
   private static final String TAG_MINECART = "hs.holder";
 
-  private final HashMap<RegistryKey<World>, HashMap<UUID, Entity>> trackedEntities = new HashMap<>();
+  private final HashMap<ResourceKey<Level>, HashMap<UUID, Entity>> trackedEntities = new HashMap<>();
 
   private Boolean loaded = null;
   private long scheduled = 0L;
@@ -51,7 +51,7 @@ public final class BetterHangingSignsRemover {
         return;
       }
 
-      if (entity.getCommandTags().contains(TAG_MAIN) || entity.getCommandTags().contains(TAG_MINECART)) {
+      if (entity.getTags().contains(TAG_MAIN) || entity.getTags().contains(TAG_MINECART)) {
         this.trackEntity(entity, world);
       }
     });
@@ -62,11 +62,11 @@ public final class BetterHangingSignsRemover {
       }
 
       if (this.scheduled == 0L) {
-        this.scheduled = Util.getMeasuringTimeMs() + 5000L;
+        this.scheduled = Util.getMillis() + 5000L;
         return;
       }
 
-      if (Util.getMeasuringTimeMs() < this.scheduled) {
+      if (Util.getMillis() < this.scheduled) {
         return;
       }
 
@@ -80,7 +80,7 @@ public final class BetterHangingSignsRemover {
     });
   }
 
-  public boolean isBetterHangingSignsLoaded(ServerWorld world) {
+  public boolean isBetterHangingSignsLoaded(ServerLevel world) {
     if (this.loaded != null) {
       return this.loaded;
     }
@@ -89,26 +89,26 @@ public final class BetterHangingSignsRemover {
       return this.cacheLoaded(true);
     }
 
-    CommandFunctionManager manager = world.getServer().getCommandFunctionManager();
-    for (Identifier id : manager.getAllFunctions()) {
-      if (id.equals(Identifier.of("ketket_signs", "tick"))) {
+    ServerFunctionManager manager = world.getServer().getFunctions();
+    for (Identifier id : manager.getFunctionNames()) {
+      if (id.equals(Identifier.fromNamespaceAndPath("ketket_signs", "tick"))) {
         return this.cacheLoaded(true);
       }
     }
 
-    ResourcePackManager resourcePackManager = world.getServer().getDataPackManager();
-    resourcePackManager.scanPacks();
-    return this.cacheLoaded(resourcePackManager.getEnabledProfiles()
+    PackRepository resourcePackManager = world.getServer().getPackRepository();
+    resourcePackManager.reload();
+    return this.cacheLoaded(resourcePackManager.getSelectedPacks()
         .stream()
         .anyMatch((profile) -> profile.getDescription().getString().contains("Better Hanging Signs")));
   }
 
-  private void processTrackedEntities(ServerWorld world) {
+  private void processTrackedEntities(ServerLevel world) {
     HashMap<UUID, Entity> entities = this.getTrackedEntities(world);
 
-    HashMap<UUID, InteractionEntity> roots = new HashMap<>();
+    HashMap<UUID, Interaction> roots = new HashMap<>();
     entities.forEach((uuid, entity) -> {
-      if (entity instanceof InteractionEntity root) {
+      if (entity instanceof Interaction root) {
         roots.put(uuid, root);
       }
     });
@@ -125,39 +125,39 @@ public final class BetterHangingSignsRemover {
     this.clearTrackedEntities(world);
   }
 
-  private ArrayDeque<ItemStack> handleRoot(InteractionEntity root, HashMap<UUID, Entity> entities, ServerWorld world) {
+  private ArrayDeque<ItemStack> handleRoot(Interaction root, HashMap<UUID, Entity> entities, ServerLevel world) {
     ItemStack frame = this.getFrameItem(root);
     ItemStack held = ItemStack.EMPTY;
 
-    Optional<ItemDisplayEntity> hangDisplay = this.findHangDisplay(root, entities.values());
+    Optional<ItemDisplay> hangDisplay = this.findHangDisplay(root, entities.values());
     if (hangDisplay.isPresent()) {
-      ItemDisplayEntity display = hangDisplay.get();
+      ItemDisplay display = hangDisplay.get();
 
-      if (root.getCommandTags().contains(TAG_HASITEM)) {
+      if (root.getTags().contains(TAG_HASITEM)) {
         held = display.getItemStack().copy();
       }
 
-      display.getPassengerList().forEach((p) -> {
-        entities.remove(p.getUuid());
+      display.getPassengers().forEach((p) -> {
+        entities.remove(p.getUUID());
         p.remove(Entity.RemovalReason.DISCARDED);
       });
-      display.removeAllPassengers();
-      entities.remove(display.getUuid());
+      display.ejectPassengers();
+      entities.remove(display.getUUID());
       display.remove(Entity.RemovalReason.DISCARDED);
     }
 
     return Stream.of(held, frame).filter((stack) -> !stack.isEmpty()).collect(Collectors.toCollection(ArrayDeque::new));
   }
 
-  private void returnItems(Entity root, ServerWorld world, ArrayDeque<ItemStack> items) {
-    BlockPos pos = BlockPos.ofFloored(root.getBoundingBox().getCenter());
+  private void returnItems(Entity root, ServerLevel world, ArrayDeque<ItemStack> items) {
+    BlockPos pos = BlockPos.containing(root.getBoundingBox().getCenter());
     BlockEntity blockEntity = world.getBlockEntity(pos);
     if (!(blockEntity instanceof SignBlockEntity sign)) {
-      ItemScatterer.spawn(world, pos, this.createDefaultedList(items));
+      Containers.dropContents(world, pos, this.createDefaultedList(items));
       return;
     }
 
-    DefaultedList<ItemStack> slots = sign.itemsigns$getItems();
+    NonNullList<ItemStack> slots = sign.itemsigns$getItems();
     for (int i = 0; i < slots.size(); i++) {
       if (slots.get(i).isEmpty() && !items.isEmpty()) {
         sign.itemsigns$setItem(i, items.poll());
@@ -165,14 +165,14 @@ public final class BetterHangingSignsRemover {
     }
 
     if (!items.isEmpty()) {
-      ItemScatterer.spawn(world, pos, this.createDefaultedList(items));
+      Containers.dropContents(world, pos, this.createDefaultedList(items));
       String message = String.format(
           "Couldn't find a suitable sign to attach items to while cleaning up Better Hanging Signs datapack. Dropped " +
           "%d item(s) at [x, y, z]=[%s]", items.size(), pos.toShortString()
       );
       ItemSignsMod.LOGGER.warn(message);
-      world.getPlayers((p) -> p.getPermissions().hasPermission(DefaultPermissions.GAMEMASTERS))
-          .forEach((p) -> p.sendMessage(Text.of(message)));
+      world.getPlayers((p) -> p.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+          .forEach((p) -> p.sendSystemMessage(Component.nullToEmpty(message)));
     }
 
     ItemSignsMod.LOGGER.info(
@@ -181,8 +181,8 @@ public final class BetterHangingSignsRemover {
     );
   }
 
-  private DefaultedList<ItemStack> createDefaultedList(ArrayDeque<ItemStack> items) {
-    DefaultedList<ItemStack> list = DefaultedList.ofSize(items.size());
+  private NonNullList<ItemStack> createDefaultedList(ArrayDeque<ItemStack> items) {
+    NonNullList<ItemStack> list = NonNullList.createWithCapacity(items.size());
     list.addAll(items);
     return list;
   }
@@ -192,40 +192,40 @@ public final class BetterHangingSignsRemover {
     return this.loaded;
   }
 
-  private void trackEntity(Entity entity, ServerWorld world) {
-    this.trackedEntities.computeIfAbsent(world.getRegistryKey(), (k) -> new HashMap<>()).put(entity.getUuid(), entity);
+  private void trackEntity(Entity entity, ServerLevel world) {
+    this.trackedEntities.computeIfAbsent(world.dimension(), (k) -> new HashMap<>()).put(entity.getUUID(), entity);
   }
 
-  private boolean hasTrackedEntities(ServerWorld world) {
-    var forWorld = this.trackedEntities.get(world.getRegistryKey());
+  private boolean hasTrackedEntities(ServerLevel world) {
+    var forWorld = this.trackedEntities.get(world.dimension());
     if (forWorld == null) {
       return false;
     }
     return !forWorld.isEmpty();
   }
 
-  private HashMap<UUID, Entity> getTrackedEntities(ServerWorld world) {
-    var forWorld = this.trackedEntities.get(world.getRegistryKey());
+  private HashMap<UUID, Entity> getTrackedEntities(ServerLevel world) {
+    var forWorld = this.trackedEntities.get(world.dimension());
     if (forWorld == null) {
       return new HashMap<>();
     }
     return new HashMap<>(forWorld);
   }
 
-  private void clearTrackedEntities(ServerWorld world) {
-    this.trackedEntities.remove(world.getRegistryKey());
+  private void clearTrackedEntities(ServerLevel world) {
+    this.trackedEntities.remove(world.dimension());
   }
 
   private ItemStack getFrameItem(Entity entity) {
-    return new ItemStack(entity.getCommandTags().contains(TAG_GLOW) ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME);
+    return new ItemStack(entity.getTags().contains(TAG_GLOW) ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME);
   }
 
-  private Optional<ItemDisplayEntity> findHangDisplay(InteractionEntity root, Collection<Entity> entities) {
+  private Optional<ItemDisplay> findHangDisplay(Interaction root, Collection<Entity> entities) {
     return entities.stream().map((e) -> {
-      if (e.getCommandTags().contains(TAG_HANG) && e instanceof ItemDisplayEntity display) {
+      if (e.getTags().contains(TAG_HANG) && e instanceof ItemDisplay display) {
         return display;
       }
       return null;
-    }).filter(Objects::nonNull).min(Comparator.comparing(root::squaredDistanceTo));
+    }).filter(Objects::nonNull).min(Comparator.comparing(root::distanceToSqr));
   }
 }

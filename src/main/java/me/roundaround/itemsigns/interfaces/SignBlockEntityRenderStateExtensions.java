@@ -1,22 +1,22 @@
 package me.roundaround.itemsigns.interfaces;
 
-import net.minecraft.client.render.item.ItemRenderState;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import org.apache.commons.lang3.NotImplementedException;
 
 public interface SignBlockEntityRenderStateExtensions {
-  default void itemsigns$setFrontItemRenderState(ItemRenderState state) {
+  default void itemsigns$setFrontItemRenderState(ItemStackRenderState state) {
     throw new NotImplementedException();
   }
 
-  default void itemsigns$setBackItemRenderState(ItemRenderState state) {
+  default void itemsigns$setBackItemRenderState(ItemStackRenderState state) {
     throw new NotImplementedException();
   }
 
-  default ItemRenderState itemsigns$getFrontItemRenderState() {
+  default ItemStackRenderState itemsigns$getFrontItemRenderState() {
     throw new NotImplementedException();
   }
 
-  default ItemRenderState itemsigns$getBackItemRenderState() {
+  default ItemStackRenderState itemsigns$getBackItemRenderState() {
     throw new NotImplementedException();
   }
 }

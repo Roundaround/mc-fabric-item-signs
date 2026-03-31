@@ -4,24 +4,24 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.interfaces.SignBlockEntityExtensions;
 import me.roundaround.itemsigns.server.SignItemStorage;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.storage.ReadView;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,46 +44,46 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   private SignItemsAttachment itemsigns$attachment = null;
 
   @Shadow
-  public abstract boolean isPlayerFacingFront(PlayerEntity player);
+  public abstract boolean isFacingFrontText(Player player);
 
   @Shadow
-  protected abstract void updateListeners();
+  protected abstract void markUpdated();
 
-  @ModifyReturnValue(method = "toInitialChunkDataNbt", at = @At("RETURN"))
-  private NbtCompound afterInitialChunkDataNbtGenerated(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+  @ModifyReturnValue(method = "getUpdateTag", at = @At("RETURN"))
+  private CompoundTag afterInitialChunkDataNbtGenerated(CompoundTag nbt, HolderLookup.Provider registries) {
     Optional.ofNullable(this.itemsigns$attachment)
-        .ifPresent((attachment) -> nbt.put(
+        .ifPresent((attachment) -> nbt.store(
             SignItemsAttachment.NBT_KEY,
             SignItemsAttachment.CODEC,
-            registries.getOps(NbtOps.INSTANCE),
+            registries.createSerializationContext(NbtOps.INSTANCE),
             attachment
         ));
     return nbt;
   }
 
-  @Inject(method = "readData", at = @At("RETURN"))
-  private void afterReadData(ReadView view, CallbackInfo ci) {
+  @Inject(method = "loadAdditional", at = @At("RETURN"))
+  private void afterReadData(ValueInput view, CallbackInfo ci) {
     view.read(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC)
         .ifPresent((attachment) -> this.itemsigns$attachment = attachment);
   }
 
   @Override
-  public boolean itemsigns$placeItemFacingPlayer(World world, PlayerEntity player, ItemStack stack) {
+  public boolean itemsigns$placeItemFacingPlayer(Level world, Player player, ItemStack stack) {
     int index = this.itemsigns$getItemIndex(player);
     if (this.itemsigns$hasItem(index)) {
       return false;
     }
-    this.itemsigns$setItem(world, index, stack.splitUnlessCreative(1, player));
+    this.itemsigns$setItem(world, index, stack.consumeAndReturn(1, player));
     return true;
   }
 
   @Override
-  public boolean itemsigns$hasItemFacingPlayer(PlayerEntity player) {
-    return this.itemsigns$hasItem(this.isPlayerFacingFront(player));
+  public boolean itemsigns$hasItemFacingPlayer(Player player) {
+    return this.itemsigns$hasItem(this.isFacingFrontText(player));
   }
 
   @Override
-  public void itemsigns$dropItemFacingPlayer(World world, PlayerEntity player) {
+  public void itemsigns$dropItemFacingPlayer(Level world, Player player) {
     int index = this.itemsigns$getItemIndex(player);
     if (!this.itemsigns$hasItem(index)) {
       return;
@@ -91,8 +91,8 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
     ItemStack stack = this.itemsigns$getItem(index);
     this.itemsigns$setItem(world, index, ItemStack.EMPTY);
-    if (!player.isInCreativeMode()) {
-      Block.dropStack(world, this.getPos(), stack);
+    if (!player.hasInfiniteMaterials()) {
+      Block.popResource(world, this.getBlockPos(), stack);
     }
   }
 
@@ -107,7 +107,7 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Override
-  public DefaultedList<ItemStack> itemsigns$getItems() {
+  public NonNullList<ItemStack> itemsigns$getItems() {
     if (this.itemsigns$attachment == null) {
       return SignItemsAttachment.createEmptyList();
     }
@@ -117,11 +117,11 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   @Override
   public void itemsigns$setItem(int index, ItemStack stack) {
     this.itemsigns$editAttachment((attachment) -> attachment.set(index, stack));
-    this.updateListeners();
+    this.markUpdated();
   }
 
   @Override
-  public void clear() {
+  public void clearContent() {
     if (this.itemsigns$attachment == null) {
       return;
     }
@@ -129,20 +129,20 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Override
-  public void onBlockReplaced(BlockPos pos, BlockState oldState) {
-    super.onBlockReplaced(pos, oldState);
+  public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+    super.preRemoveSideEffects(pos, oldState);
 
-    if (this.world == null || !(this.world instanceof ServerWorld serverWorld)) {
+    if (this.level == null || !(this.level instanceof ServerLevel serverWorld)) {
       return;
     }
 
-    ItemScatterer.spawn(serverWorld, pos, this.itemsigns$getItems());
+    Containers.dropContents(serverWorld, pos, this.itemsigns$getItems());
     SignItemStorage.getInstance(serverWorld).remove(pos);
   }
 
   @Unique
-  private int itemsigns$getItemIndex(PlayerEntity player) {
-    return this.itemsigns$getItemIndex(this.isPlayerFacingFront(player));
+  private int itemsigns$getItemIndex(Player player) {
+    return this.itemsigns$getItemIndex(this.isFacingFrontText(player));
   }
 
   @Unique
@@ -177,13 +177,13 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
   }
 
   @Unique
-  private void itemsigns$setItem(World world, int index, ItemStack stack) {
+  private void itemsigns$setItem(Level world, int index, ItemStack stack) {
     this.itemsigns$setItem(index, stack);
     world.playSound(
         null,
-        this.getPos(),
-        stack.isEmpty() ? SoundEvents.ENTITY_ITEM_FRAME_REMOVE_ITEM : SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM,
-        SoundCategory.NEUTRAL,
+        this.getBlockPos(),
+        stack.isEmpty() ? SoundEvents.ITEM_FRAME_REMOVE_ITEM : SoundEvents.ITEM_FRAME_ADD_ITEM,
+        SoundSource.NEUTRAL,
         1f,
         1f
     );
@@ -194,9 +194,9 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
     this.itemsigns$attachment = editor.apply(Optional.ofNullable(this.itemsigns$attachment)
         .orElse(SignItemsAttachment.DEFAULT));
 
-    World world = this.getWorld();
-    if (world instanceof ServerWorld serverWorld) {
-      SignItemStorage.getInstance(serverWorld).set(this.getPos(), this.itemsigns$attachment);
+    Level world = this.getLevel();
+    if (world instanceof ServerLevel serverWorld) {
+      SignItemStorage.getInstance(serverWorld).set(this.getBlockPos(), this.itemsigns$attachment);
     }
   }
 }

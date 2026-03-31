@@ -4,19 +4,19 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.roundaround.itemsigns.attachment.SignItemsAttachment;
 import me.roundaround.itemsigns.generated.Constants;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SignItemStorage extends PersistentState {
+public class SignItemStorage extends SavedData {
   public static final Codec<SignItemStorage> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Codec.list(
       Entry.CODEC).fieldOf("Signs").forGetter(SignItemStorage::getEntries)).apply(instance, SignItemStorage::new));
-  public static final PersistentStateType<SignItemStorage> STATE_TYPE = new PersistentStateType<>(
+  public static final SavedDataType<SignItemStorage> STATE_TYPE = new SavedDataType<>(
       Constants.MOD_ID,
       SignItemStorage::new,
       CODEC,
@@ -26,7 +26,7 @@ public class SignItemStorage extends PersistentState {
   private final HashMap<ChunkPos, HashMap<BlockPos, SignItemsAttachment>> attachments = new HashMap<>();
 
   private SignItemStorage() {
-    this.markDirty();
+    this.setDirty();
   }
 
   private SignItemStorage(List<Entry> entries) {
@@ -46,13 +46,13 @@ public class SignItemStorage extends PersistentState {
     }
 
     this.put(blockPos, attachment);
-    this.markDirty();
+    this.setDirty();
   }
 
   public void remove(BlockPos blockPos) {
     this.get(new ChunkPos(blockPos)).ifPresent((chunk) -> {
       if (chunk.remove(blockPos) != null) {
-        this.markDirty();
+        this.setDirty();
       }
     });
   }
@@ -77,8 +77,8 @@ public class SignItemStorage extends PersistentState {
         .toList();
   }
 
-  public static SignItemStorage getInstance(ServerWorld world) {
-    return world.getPersistentStateManager().getOrCreate(STATE_TYPE);
+  public static SignItemStorage getInstance(ServerLevel world) {
+    return world.getDataStorage().computeIfAbsent(STATE_TYPE);
   }
 
   private record Entry(BlockPos blockPos, SignItemsAttachment attachment) {

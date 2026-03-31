@@ -8,11 +8,11 @@ import me.roundaround.itemsigns.generated.Constants;
 import me.roundaround.itemsigns.server.SignItemStorage;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
-import net.minecraft.block.entity.SignBlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.Containers;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,13 +26,13 @@ public class ItemSignsMod implements ModInitializer {
   @Override
   public void onInitialize() {
     LoadFromNbtEvents.BLOCK_ENTITY.register((nbt, world, pos, state, registries) -> {
-      if (!state.isIn(BlockTags.ALL_SIGNS)) {
+      if (!state.is(BlockTags.ALL_SIGNS)) {
         return state;
       }
 
       SignItemsAttachment attachment = SignItemStorage.getInstance(world).get(pos);
       if (attachment != null) {
-        nbt.put(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.getOps(NbtOps.INSTANCE), attachment);
+        nbt.store(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.createSerializationContext(NbtOps.INSTANCE), attachment);
       }
       return state;
     });
@@ -53,7 +53,7 @@ public class ItemSignsMod implements ModInitializer {
               pos.toShortString()
           );
 
-          ItemScatterer.spawn(world, pos, attachment.getAll());
+          Containers.dropContents(world, pos, attachment.getAll());
         }
 
         storage.remove(pos);
