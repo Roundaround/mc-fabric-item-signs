@@ -10,10 +10,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class LoadFromNbtEvents {
   public static Event<BlockEntityLoad> BLOCK_ENTITY = EventFactory.createArrayBacked(
-      BlockEntityLoad.class, (callbacks) -> (nbt, world, pos, state, registries) -> {
+      BlockEntityLoad.class, (callbacks) -> (nbt, level, pos, state, registries) -> {
         BlockState workingState = state;
         for (BlockEntityLoad callback : callbacks) {
-          workingState = callback.beforeBlockEntityLoaded(nbt, world, pos, workingState, registries);
+          workingState = callback.beforeBlockEntityLoaded(nbt, level, pos, workingState, registries);
         }
         return workingState;
       }
@@ -23,7 +23,7 @@ public final class LoadFromNbtEvents {
   public interface BlockEntityLoad {
     BlockState beforeBlockEntityLoaded(
         CompoundTag nbt,
-        ServerLevel world,
+        ServerLevel level,
         BlockPos pos,
         BlockState state,
         HolderLookup.Provider registries

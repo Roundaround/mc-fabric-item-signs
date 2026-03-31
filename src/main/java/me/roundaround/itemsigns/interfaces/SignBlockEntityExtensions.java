@@ -1,11 +1,13 @@
 package me.roundaround.itemsigns.interfaces;
 
+import me.roundaround.gradle.api.annotation.InjectedInterface;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+@InjectedInterface
 public interface SignBlockEntityExtensions extends Clearable {
   default boolean itemsigns$placeItemFacingPlayer(Level world, Player player, ItemStack stack) {
     return false;

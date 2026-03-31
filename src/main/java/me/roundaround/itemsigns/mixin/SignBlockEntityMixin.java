@@ -51,13 +51,12 @@ public abstract class SignBlockEntityMixin extends BlockEntity implements SignBl
 
   @ModifyReturnValue(method = "getUpdateTag", at = @At("RETURN"))
   private CompoundTag afterInitialChunkDataNbtGenerated(CompoundTag nbt, HolderLookup.Provider registries) {
-    Optional.ofNullable(this.itemsigns$attachment)
-        .ifPresent((attachment) -> nbt.store(
-            SignItemsAttachment.NBT_KEY,
-            SignItemsAttachment.CODEC,
-            registries.createSerializationContext(NbtOps.INSTANCE),
-            attachment
-        ));
+    Optional.ofNullable(this.itemsigns$attachment).ifPresent((attachment) -> nbt.store(
+        SignItemsAttachment.NBT_KEY,
+        SignItemsAttachment.CODEC,
+        registries.createSerializationContext(NbtOps.INSTANCE),
+        attachment
+    ));
     return nbt;
   }
 

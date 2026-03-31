@@ -17,9 +17,11 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(SerializableChunkData.class)
 public abstract class SerializableChunkDataMixin {
   @WrapOperation(
-      method = "method_61797", at = @At(
+      method = "lambda$postLoadChunk$0", at = @At(
       value = "INVOKE",
-      target = "Lnet/minecraft/world/level/block/entity/BlockEntity;loadStatic(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/level/block/entity/BlockEntity;"
+      target = "Lnet/minecraft/world/level/block/entity/BlockEntity;loadStatic(Lnet/minecraft/core/BlockPos;" +
+               "Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/nbt/CompoundTag;" +
+               "Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/level/block/entity/BlockEntity;"
   )
   )
   private static BlockEntity spliceItemsIntoNbt(

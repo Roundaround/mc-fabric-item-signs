@@ -25,20 +25,25 @@ public class ItemSignsMod implements ModInitializer {
 
   @Override
   public void onInitialize() {
-    LoadFromNbtEvents.BLOCK_ENTITY.register((nbt, world, pos, state, registries) -> {
+    LoadFromNbtEvents.BLOCK_ENTITY.register((nbt, level, pos, state, registries) -> {
       if (!state.is(BlockTags.ALL_SIGNS)) {
         return state;
       }
 
-      SignItemsAttachment attachment = SignItemStorage.getInstance(world).get(pos);
+      SignItemsAttachment attachment = SignItemStorage.getInstance(level).get(pos);
       if (attachment != null) {
-        nbt.store(SignItemsAttachment.NBT_KEY, SignItemsAttachment.CODEC, registries.createSerializationContext(NbtOps.INSTANCE), attachment);
+        nbt.store(
+            SignItemsAttachment.NBT_KEY,
+            SignItemsAttachment.CODEC,
+            registries.createSerializationContext(NbtOps.INSTANCE),
+            attachment
+        );
       }
       return state;
     });
 
-    ServerChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
-      SignItemStorage storage = SignItemStorage.getInstance(world);
+    ServerChunkEvents.CHUNK_LOAD.register((level, chunk, _) -> {
+      SignItemStorage storage = SignItemStorage.getInstance(level);
       HashMap<BlockPos, SignItemsAttachment> signs = storage.allInChunk(chunk.getPos());
       chunk.getBlockEntities().forEach((pos, blockEntity) -> {
         if (blockEntity instanceof SignBlockEntity) {
@@ -53,7 +58,7 @@ public class ItemSignsMod implements ModInitializer {
               pos.toShortString()
           );
 
-          Containers.dropContents(world, pos, attachment.getAll());
+          Containers.dropContents(level, pos, attachment.getAll());
         }
 
         storage.remove(pos);

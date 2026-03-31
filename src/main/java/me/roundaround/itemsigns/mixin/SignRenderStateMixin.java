@@ -1,13 +1,13 @@
 package me.roundaround.itemsigns.mixin;
 
-import me.roundaround.itemsigns.interfaces.SignBlockEntityRenderStateExtensions;
+import me.roundaround.itemsigns.interfaces.SignRenderStateExtensions;
 import net.minecraft.client.renderer.blockentity.state.SignRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(SignRenderState.class)
-public class SignRenderStateMixin implements SignBlockEntityRenderStateExtensions {
+public class SignRenderStateMixin implements SignRenderStateExtensions {
   @Unique
   private ItemStackRenderState itemsigns$frontState;
 

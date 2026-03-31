@@ -51,13 +51,13 @@ public final class BetterHangingSignsRemover {
         return;
       }
 
-      if (entity.getTags().contains(TAG_MAIN) || entity.getTags().contains(TAG_MINECART)) {
+      if (entity.entityTags().contains(TAG_MAIN) || entity.entityTags().contains(TAG_MINECART)) {
         this.trackEntity(entity, world);
       }
     });
 
-    ServerTickEvents.END_WORLD_TICK.register((world) -> {
-      if (!this.hasTrackedEntities(world) || this.isBetterHangingSignsLoaded(world)) {
+    ServerTickEvents.END_LEVEL_TICK.register((level) -> {
+      if (!this.hasTrackedEntities(level) || this.isBetterHangingSignsLoaded(level)) {
         return;
       }
 
@@ -70,7 +70,7 @@ public final class BetterHangingSignsRemover {
         return;
       }
 
-      this.processTrackedEntities(world);
+      this.processTrackedEntities(level);
       this.scheduled = 0L;
     });
 
@@ -133,7 +133,7 @@ public final class BetterHangingSignsRemover {
     if (hangDisplay.isPresent()) {
       ItemDisplay display = hangDisplay.get();
 
-      if (root.getTags().contains(TAG_HASITEM)) {
+      if (root.entityTags().contains(TAG_HASITEM)) {
         held = display.getItemStack().copy();
       }
 
@@ -217,12 +217,12 @@ public final class BetterHangingSignsRemover {
   }
 
   private ItemStack getFrameItem(Entity entity) {
-    return new ItemStack(entity.getTags().contains(TAG_GLOW) ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME);
+    return new ItemStack(entity.entityTags().contains(TAG_GLOW) ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME);
   }
 
   private Optional<ItemDisplay> findHangDisplay(Interaction root, Collection<Entity> entities) {
     return entities.stream().map((e) -> {
-      if (e.getTags().contains(TAG_HANG) && e instanceof ItemDisplay display) {
+      if (e.entityTags().contains(TAG_HANG) && e instanceof ItemDisplay display) {
         return display;
       }
       return null;

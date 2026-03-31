@@ -1,9 +1,11 @@
 package me.roundaround.itemsigns.interfaces;
 
+import me.roundaround.gradle.api.annotation.InjectedInterface;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import org.apache.commons.lang3.NotImplementedException;
 
-public interface SignBlockEntityRenderStateExtensions {
+@InjectedInterface
+public interface SignRenderStateExtensions {
   default void itemsigns$setFrontItemRenderState(ItemStackRenderState state) {
     throw new NotImplementedException();
   }
